@@ -1,7 +1,7 @@
 # ebrgo4j
 
 ## Usage
-先`maven install`，在项目`pom.xml`中引入依赖
+先`maven install`该项目至本地Maven仓库，在自己的项目`pom.xml`中引入依赖
 ```xml
 <dependency>
 	<groupId>com.touuki</groupId>
@@ -20,7 +20,23 @@ public EthereumUtils ethereumUtils() throws ConnectException, URISyntaxException
 	return new EthereumUtils(url);
 }
 ```
-
+在需要的类中注入
+```java
+@Autowired
+private EthereumUtils ethereumUtils;
+```
+然后就可以使用其与以太坊进行交互，比如发起ETH转账并获得其交易hash
+```java
+//以3GWei的手续费率向0xc6c81a3cA70D8A15084b05d2f4b3AC4E2456D846地址转1.1eth
+String hash = ethereumUtils.ethTransfer("your-password", "your-encryption", 
+	"0xc6c81a3cA70D8A15084b05d2f4b3AC4E2456D846", BigDecimal.valueOf(3), BigDecimal.valueOf(1.1));
+```
+生成新的账户
+```java
+List<String> keyPair = ethereumUtils.createAccount("your-password");
+String address = keyPair.get(0);
+String encryption = keyPair.get(1);
+```
 #### Listener
 创建一个监听事件处理器
 ```java
@@ -69,8 +85,21 @@ public EthereumListener ethereumListener(EthereumUtils ethereumUtils, EthereumEv
 	return ethereumListener;
 }
 ```
-
+在需要的类中注入
+```java
+@Autowired
+private EthereumListener ethereumListener;
+```
 开始监听
 ```java
 ethereumListener.start()
+```
+
+可以将需要监听的交易hash交给Listener，比如上面eth的转账
+```java
+ethereumListener.addListeningTransaction(hash);
+```
+也可以添加监听的地址，比如通过Utilities创建的地址
+```java
+ethereumListener.addListeningAddress(address, "your-custom-id");
 ```
