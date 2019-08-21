@@ -99,7 +99,7 @@ public class EthereumUtils {
 		return ethereumRequest.ethGetTransactionReceipt(transactionHash).getTransactionReceipt().get();
 	}
 
-	public String ethTransfer(String password, String encryption, String to, double gasPrice, double value)
+	public String ethTransfer(String password, String encryption, String to, BigDecimal gasPrice, BigDecimal value)
 			throws Exception {
 
 		WalletFile walletFile = objectMapper.readValue(encryption, WalletFile.class);
@@ -108,9 +108,9 @@ public class EthereumUtils {
 		RawTransaction rawTransaction = RawTransaction.createEtherTransaction(
 				ethereumRequest.ethGetTransactionCount(credentials.getAddress(), DefaultBlockParameterName.PENDING)
 						.getTransactionCount(),
-				Convert.toWei(BigDecimal.valueOf(gasPrice), Convert.Unit.GWEI).toBigInteger(),
+				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(),
 				BigInteger.valueOf(21000), to,
-				Convert.toWei(BigDecimal.valueOf(value), Convert.Unit.ETHER).toBigInteger());
+				Convert.toWei(value, Convert.Unit.ETHER).toBigInteger());
 
 		String hexValue = Numeric.toHexString(TransactionEncoder.signMessage(rawTransaction, credentials));
 		return ethereumRequest.ethSendRawTransaction(hexValue).getTransactionHash();
