@@ -9,7 +9,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
 
-public abstract class AbstractEthereumService implements EthereumService {
+public abstract class AbstractEthereumEventHandler implements EthereumEventHandler {
 	@Override
 	public void ethReceived(Object addressId, Transaction transaction, Date timestamp) {
 		BigDecimal amount = Convert.fromWei(new BigDecimal(transaction.getValue()), Convert.Unit.ETHER);

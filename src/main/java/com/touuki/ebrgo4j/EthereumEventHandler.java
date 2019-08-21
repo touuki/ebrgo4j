@@ -5,7 +5,7 @@ import java.util.Date;
 import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
-public interface EthereumService {
+public interface EthereumEventHandler {
 	void blockCheckFinished(long blockNumber);
 
 	void ethReceived(Object addressId, Transaction transaction, Date timestamp);

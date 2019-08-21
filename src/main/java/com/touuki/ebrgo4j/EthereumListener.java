@@ -20,7 +20,7 @@ public class EthereumListener {
 	// private static final org.slf4j.Logger log =
 	// org.slf4j.LoggerFactory.getLogger(EthereumListener.class);
 
-	private final EthereumService ethereumService;
+	private final EthereumEventHandler ethereumEventHandler;
 
 	private final EthereumUtils ethereumUtils;
 
@@ -38,14 +38,14 @@ public class EthereumListener {
 
 	private int confirm = 9;
 
-	public EthereumListener(EthereumUtils ethereumUtils, EthereumService ethereumService) throws Exception {
+	public EthereumListener(EthereumUtils ethereumUtils, EthereumEventHandler ethereumService) throws Exception {
 		this(ethereumUtils, ethereumService, Executors.newScheduledThreadPool(2));
 	}
 
-	public EthereumListener(EthereumUtils ethereumUtils, EthereumService ethereumService,
+	public EthereumListener(EthereumUtils ethereumUtils, EthereumEventHandler ethereumEventHandler,
 			ScheduledExecutorService executor) throws Exception {
 		this.ethereumUtils = ethereumUtils;
-		this.ethereumService = ethereumService;
+		this.ethereumEventHandler = ethereumEventHandler;
 		this.executor = executor;
 	}
 
@@ -150,7 +150,7 @@ public class EthereumListener {
 					+ 1 >= this.blockNumber; this.blockNumber++) {
 				// log.debug("Checking block {}", this.blockNumber);
 				handleBlock(ethereumUtils.ethGetBlock(this.blockNumber));
-				executor.execute(() -> ethereumService.blockCheckFinished(this.blockNumber));
+				executor.execute(() -> ethereumEventHandler.blockCheckFinished(this.blockNumber));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -178,7 +178,7 @@ public class EthereumListener {
 						String address = "0x" + log.getTopics().get(2).substring(26);
 						if (idForAddress.containsKey(address)) {
 							Erc20 erc20 = erc20ForAddress.get(transaction.getTo());
-							executor.execute(() -> ethereumService.erc20Received(idForAddress.get(address),
+							executor.execute(() -> ethereumEventHandler.erc20Received(idForAddress.get(address),
 									log.getData(), transaction, timestamp, erc20));
 						}
 					}
@@ -187,14 +187,14 @@ public class EthereumListener {
 		} else if (idForAddress.containsKey(transaction.getTo())) {
 			TransactionReceipt receipt = ethereumUtils.ethGetTransactionReceipt(transaction.getHash());
 			if (receipt.getStatus().equals("0x1")) {
-				executor.execute(() -> ethereumService.ethReceived(idForAddress.get(transaction.getTo()), transaction,
+				executor.execute(() -> ethereumEventHandler.ethReceived(idForAddress.get(transaction.getTo()), transaction,
 						timestamp));
 			}
 		}
 
 		if (timeForTransactionHash.containsKey(transaction.getHash())) {
 			TransactionReceipt receipt = ethereumUtils.ethGetTransactionReceipt(transaction.getHash());
-			executor.execute(() -> ethereumService.transactionFinished(transaction, receipt, timestamp));
+			executor.execute(() -> ethereumEventHandler.transactionFinished(transaction, receipt, timestamp));
 			timeForTransactionHash.remove(transaction.getHash());
 		}
 
