@@ -1,4 +1,4 @@
-package com.uki.ebrgo4j;
+package com.touuki.ebrgo4j;
 
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.request.Transaction;

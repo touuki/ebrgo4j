@@ -1,4 +1,4 @@
-package com.uki.ebrgo4j;
+package com.touuki.ebrgo4j;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

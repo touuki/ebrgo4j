@@ -1,4 +1,4 @@
-package com.uki.ebrgo4j;
+package com.touuki.ebrgo4j;
 
 import java.math.BigDecimal;
 import java.util.Date;
