@@ -148,9 +148,10 @@ public class EthereumListener {
 		try {
 			for (long blockNumber = ethereumUtils.ethGetNumber(); blockNumber - confirm
 					+ 1 >= this.blockNumber; this.blockNumber++) {
-				// log.debug("Checking block {}", this.blockNumber);
-				handleBlock(ethereumUtils.ethGetBlock(this.blockNumber));
-				executor.execute(() -> ethereumEventHandler.blockCheckFinished(this.blockNumber));
+				long checkingNumber = this.blockNumber;
+				// log.debug("Checking block {}", checkingNumber);
+				handleBlock(ethereumUtils.ethGetBlock(checkingNumber));
+				executor.execute(() -> ethereumEventHandler.blockCheckFinished(checkingNumber));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
