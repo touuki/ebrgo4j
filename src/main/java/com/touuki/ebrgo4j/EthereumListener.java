@@ -9,6 +9,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionResult;
 import org.web3j.protocol.core.methods.response.Log;
@@ -17,8 +19,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.exceptions.ContractCallException;
 
 public class EthereumListener {
-	// private static final org.slf4j.Logger log =
-	// org.slf4j.LoggerFactory.getLogger(EthereumListener.class);
+	private static final Logger log = LoggerFactory.getLogger(EthereumListener.class);
 
 	private final EthereumEventHandler ethereumEventHandler;
 
@@ -140,7 +141,7 @@ public class EthereumListener {
 			}
 			executor.scheduleWithFixedDelay(this::checkBlock, 0, 10, TimeUnit.SECONDS);
 			started = true;
-			// log.info("Ethereum listener started at block number {}", this.blockNumber);
+			log.info("Ethereum listener started at block number {}", this.blockNumber);
 		}
 	}
 
@@ -149,7 +150,7 @@ public class EthereumListener {
 			for (long blockNumber = ethereumUtils.ethGetNumber(); blockNumber - confirm
 					+ 1 >= this.blockNumber; this.blockNumber++) {
 				long checkingNumber = this.blockNumber;
-				// log.debug("Checking block {}", checkingNumber);
+				log.debug("Start checking block {}", checkingNumber);
 				handleBlock(ethereumUtils.ethGetBlock(checkingNumber));
 				executor.execute(() -> ethereumEventHandler.blockCheckFinished(checkingNumber));
 			}
