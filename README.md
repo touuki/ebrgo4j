@@ -6,7 +6,7 @@
 <dependency>
 	<groupId>com.touuki</groupId>
 	<artifactId>ebrgo4j</artifactId>
-	<version>0.1.1</version>
+	<version>1.0.0</version>
 </dependency>
 ```
 
