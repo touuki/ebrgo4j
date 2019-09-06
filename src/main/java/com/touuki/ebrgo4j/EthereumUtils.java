@@ -10,6 +10,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.web3j.abi.FunctionEncoder;
@@ -53,6 +54,9 @@ public class EthereumUtils {
 	}
 
 	private EthereumRequest ethereumRequest;
+	private BigInteger gasPrice;
+	private long gasPriceTimestamp = 0;
+	private long gasPriceUpdatePeriod = 180_000L;
 
 	public EthereumUtils(String url) throws ConnectException, URISyntaxException {
 		EthereumRequestImpl ethereumRequestImpl = new EthereumRequestImpl(url);
@@ -77,9 +81,23 @@ public class EthereumUtils {
 		return objectMapper.writeValueAsString(walletFile);
 	}
 
+	public BigInteger ethGasPrice() throws Exception {
+		if (new Date().getTime() > gasPriceTimestamp + gasPriceUpdatePeriod) {
+			updateGasPrice();
+		}
+		return gasPrice;
+	}
+
 	public BigDecimal gasPrice() throws Exception {
-		BigInteger gasPrice = ethereumRequest.ethGasPrice().getGasPrice();
-		return Convert.fromWei(new BigDecimal(gasPrice), Convert.Unit.GWEI);
+		return Convert.fromWei(new BigDecimal(ethGasPrice()), Convert.Unit.GWEI);
+	}
+
+	public synchronized void updateGasPrice() throws Exception {
+		long now = new Date().getTime();
+		if (now > gasPriceTimestamp + gasPriceUpdatePeriod) {
+			gasPrice = ethereumRequest.ethGasPrice().getGasPrice();
+			gasPriceTimestamp = now;
+		}
 	}
 
 	public Block ethGetBlock(long blockNumber) throws Exception {
@@ -99,28 +117,76 @@ public class EthereumUtils {
 		return ethereumRequest.ethGetTransactionReceipt(transactionHash).getTransactionReceipt().get();
 	}
 
+	public String ethTransfer(String password, String encryption, String to, BigDecimal value) throws Exception {
+		WalletFile walletFile = objectMapper.readValue(encryption, WalletFile.class);
+		return ethTransfer(Credentials.create(Wallet.decrypt(password, walletFile)), to, ethGasPrice(), value);
+	}
+
 	public String ethTransfer(String password, String encryption, String to, BigDecimal gasPrice, BigDecimal value)
 			throws Exception {
-
 		WalletFile walletFile = objectMapper.readValue(encryption, WalletFile.class);
-		Credentials credentials = Credentials.create(Wallet.decrypt(password, walletFile));
+		return ethTransfer(Credentials.create(Wallet.decrypt(password, walletFile)), to,
+				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), value);
+	}
+
+	public String ethTransfer(String privateKey, String to, BigDecimal value) throws Exception {
+		return ethTransfer(Credentials.create(privateKey), to, ethGasPrice(), value);
+	}
+
+	public String ethTransfer(String privateKey, String to, BigDecimal gasPrice, BigDecimal value) throws Exception {
+		return ethTransfer(Credentials.create(privateKey), to,
+				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), value);
+	}
+
+	protected String ethTransfer(Credentials credentials, String to, BigInteger gasPrice, BigDecimal value)
+			throws Exception {
 
 		RawTransaction rawTransaction = RawTransaction.createEtherTransaction(
 				ethereumRequest.ethGetTransactionCount(credentials.getAddress(), DefaultBlockParameterName.PENDING)
 						.getTransactionCount(),
-				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(),
-				BigInteger.valueOf(21000), to,
-				Convert.toWei(value, Convert.Unit.ETHER).toBigInteger());
+				gasPrice, BigInteger.valueOf(21000), to, Convert.toWei(value, Convert.Unit.ETHER).toBigInteger());
 
 		String hexValue = Numeric.toHexString(TransactionEncoder.signMessage(rawTransaction, credentials));
 		return ethereumRequest.ethSendRawTransaction(hexValue).getTransactionHash();
 	}
 
+	public String erc20Transfer(String password, String encryption, String to, BigDecimal value, String contract)
+			throws Exception {
+		WalletFile walletFile = objectMapper.readValue(encryption, WalletFile.class);
+		return erc20Transfer(Credentials.create(Wallet.decrypt(password, walletFile)), to, ethGasPrice(), value,
+				contract, erc20CallDecimals(contract));
+	}
+
+	public String erc20Transfer(String password, String encryption, String to, BigDecimal gasPrice, BigDecimal value,
+			String contract) throws Exception {
+		return erc20Transfer(password, encryption, to, gasPrice, value, contract, erc20CallDecimals(contract));
+	}
+
 	public String erc20Transfer(String password, String encryption, String to, BigDecimal gasPrice, BigDecimal value,
 			String contract, int decimals) throws Exception {
 		WalletFile walletFile = objectMapper.readValue(encryption, WalletFile.class);
-		Credentials credentials = Credentials.create(Wallet.decrypt(password, walletFile));
+		return erc20Transfer(Credentials.create(Wallet.decrypt(password, walletFile)), to,
+				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), value, contract, decimals);
+	}
 
+	public String erc20Transfer(String privateKey, String to, BigDecimal value, String contract) throws Exception {
+		return erc20Transfer(Credentials.create(privateKey), to, ethGasPrice(), value, contract,
+				erc20CallDecimals(contract));
+	}
+
+	public String erc20Transfer(String privateKey, String to, BigDecimal gasPrice, BigDecimal value, String contract)
+			throws Exception {
+		return erc20Transfer(privateKey, to, gasPrice, value, contract, erc20CallDecimals(contract));
+	}
+
+	public String erc20Transfer(String privateKey, String to, BigDecimal gasPrice, BigDecimal value, String contract,
+			int decimals) throws Exception {
+		return erc20Transfer(Credentials.create(privateKey), to,
+				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), value, contract, decimals);
+	}
+
+	protected String erc20Transfer(Credentials credentials, String to, BigInteger gasPrice, BigDecimal value,
+			String contract, int decimals) throws Exception {
 		Function function = new Function("transfer",
 				Arrays.asList((Type<?>) new Address(to),
 						(Type<?>) new Uint256(value.multiply(BigDecimal.TEN.pow(decimals)).toBigInteger())),
@@ -128,15 +194,14 @@ public class EthereumUtils {
 		String encodedFunction = FunctionEncoder.encode(function);
 
 		org.web3j.protocol.core.methods.request.Transaction transaction = org.web3j.protocol.core.methods.request.Transaction
-				.createFunctionCallTransaction(credentials.getAddress(), null,
-						Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), null, contract, encodedFunction);
+				.createFunctionCallTransaction(credentials.getAddress(), null, gasPrice, null, contract,
+						encodedFunction);
 		BigInteger gasLimit = ethereumRequest.ethEstimateGas(transaction).getAmountUsed();
 
 		RawTransaction rawTransaction = RawTransaction.createTransaction(
 				ethereumRequest.ethGetTransactionCount(credentials.getAddress(), DefaultBlockParameterName.PENDING)
 						.getTransactionCount(),
-				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), gasLimit.multiply(BigInteger.valueOf(2)),
-				contract, encodedFunction);
+				gasPrice, gasLimit.multiply(BigInteger.valueOf(2)), contract, encodedFunction);
 
 		String hexValue = Numeric.toHexString(TransactionEncoder.signMessage(rawTransaction, credentials));
 		return ethereumRequest.ethSendRawTransaction(hexValue).getTransactionHash();
