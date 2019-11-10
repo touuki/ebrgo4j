@@ -17,12 +17,13 @@ public abstract class AbstractEthereumEventHandler implements EthereumEventHandl
 	};
 
 	@Override
-	public void erc20Received(Object addressId, String rawValue, Transaction transaction, Date timestamp, Erc20 erc20) {
-		BigDecimal amount = new BigDecimal(Numeric.toBigInt(rawValue));
+	public void erc20Received(Object addressId, Log log, Transaction transaction, Date timestamp, Erc20 erc20) {
+		BigDecimal amount = new BigDecimal(Numeric.toBigInt(log.getData()));
 		if (erc20.getDecimals() > 0) {
 			amount = amount.divide(BigDecimal.TEN.pow(erc20.getDecimals()));
 		}
-		erc20Received(addressId, transaction.getFrom(), transaction.getTo(), amount, timestamp, erc20);
+		erc20Received(addressId, "0x" + log.getTopics().get(1).substring(26),
+				"0x" + log.getTopics().get(2).substring(26), amount, timestamp, erc20);
 	};
 
 	public void transactionFinished(Transaction transaction, TransactionReceipt receipt, Date timestamp) {

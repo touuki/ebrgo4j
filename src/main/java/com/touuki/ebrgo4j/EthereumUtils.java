@@ -9,7 +9,9 @@ import java.net.URISyntaxException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -34,6 +36,7 @@ import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 import org.web3j.tx.exceptions.ContractCallException;
+import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
@@ -115,6 +118,36 @@ public class EthereumUtils {
 
 	public TransactionReceipt ethGetTransactionReceipt(String transactionHash) throws Exception {
 		return ethereumRequest.ethGetTransactionReceipt(transactionHash).getTransactionReceipt().get();
+	}
+
+	public List<Erc20Transfer> getErc20Transfer(String transactionHash) throws Exception {
+		TransactionReceipt receipt = ethGetTransactionReceipt(transactionHash);
+		if (receipt == null) {
+			return Collections.emptyList();
+		}
+		int decimal = -1;
+		List<Erc20Transfer> erc20Transfers = new ArrayList<Erc20Transfer>();
+		for (Log log : receipt.getLogs()) {
+			if (log.getTopics().get(0).equals("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")) {
+				Erc20Transfer erc20Transfer = new Erc20Transfer();
+				erc20Transfer.setHash(transactionHash);
+				erc20Transfer.setFrom("0x" + log.getTopics().get(1).substring(26));
+				erc20Transfer.setTo("0x" + log.getTopics().get(2).substring(26));
+				erc20Transfer.setContract(receipt.getTo());
+				erc20Transfer.setStatus(receipt.getStatus().equals("0x1"));
+				if (decimal == -1) {
+					decimal = erc20CallDecimals(receipt.getTo());
+				}
+				if (decimal > 0) {
+					erc20Transfer.setAmount(
+							new BigDecimal(Numeric.toBigInt(log.getData())).divide(BigDecimal.TEN.pow(decimal)));
+				} else {
+					erc20Transfer.setAmount(new BigDecimal(Numeric.toBigInt(log.getData())));
+				}
+				erc20Transfers.add(erc20Transfer);
+			}
+		}
+		return erc20Transfers;
 	}
 
 	public String ethTransfer(String password, String encryption, String to, BigDecimal value) throws Exception {

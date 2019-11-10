@@ -181,7 +181,7 @@ public class EthereumListener {
 						if (idForAddress.containsKey(address)) {
 							Erc20 erc20 = erc20ForAddress.get(transaction.getTo());
 							executor.execute(() -> ethereumEventHandler.erc20Received(idForAddress.get(address),
-									log.getData(), transaction, timestamp, erc20));
+									log, transaction, timestamp, erc20));
 						}
 					}
 				}
