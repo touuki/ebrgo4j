@@ -125,7 +125,7 @@ public class EthereumUtils {
 		if (receipt == null) {
 			return Collections.emptyList();
 		}
-		int decimal = -1;
+		int decimals = -1;
 		List<Erc20Transfer> erc20Transfers = new ArrayList<Erc20Transfer>();
 		for (Log log : receipt.getLogs()) {
 			if (log.getTopics().get(0).equals("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")) {
@@ -135,19 +135,21 @@ public class EthereumUtils {
 				erc20Transfer.setTo("0x" + log.getTopics().get(2).substring(26));
 				erc20Transfer.setContract(receipt.getTo());
 				erc20Transfer.setStatus(receipt.getStatus().equals("0x1"));
-				if (decimal == -1) {
-					decimal = erc20CallDecimals(receipt.getTo());
+				if (decimals == -1) {
+					decimals = erc20CallDecimals(receipt.getTo());
 				}
-				if (decimal > 0) {
-					erc20Transfer.setAmount(
-							new BigDecimal(Numeric.toBigInt(log.getData())).divide(BigDecimal.TEN.pow(decimal)));
-				} else {
-					erc20Transfer.setAmount(new BigDecimal(Numeric.toBigInt(log.getData())));
-				}
+				erc20Transfer.setAmount(
+						new BigDecimal(Numeric.toBigInt(log.getData())).divide(BigDecimal.TEN.pow(decimals)));
 				erc20Transfers.add(erc20Transfer);
 			}
 		}
 		return erc20Transfers;
+	}
+
+	public BigDecimal getErc20Amount(String address, String contract) throws Exception {
+		int decimals = erc20CallDecimals(contract);
+		BigInteger rawValue = erc20CallBalanceOf(contract, address);
+		return new BigDecimal(rawValue).divide(BigDecimal.TEN.pow(decimals));
 	}
 
 	public String ethTransfer(String password, String encryption, String to, BigDecimal value) throws Exception {
@@ -187,39 +189,29 @@ public class EthereumUtils {
 			throws Exception {
 		WalletFile walletFile = objectMapper.readValue(encryption, WalletFile.class);
 		return erc20Transfer(Credentials.create(Wallet.decrypt(password, walletFile)), to, ethGasPrice(), value,
-				contract, erc20CallDecimals(contract));
+				contract);
 	}
 
 	public String erc20Transfer(String password, String encryption, String to, BigDecimal gasPrice, BigDecimal value,
 			String contract) throws Exception {
-		return erc20Transfer(password, encryption, to, gasPrice, value, contract, erc20CallDecimals(contract));
-	}
-
-	public String erc20Transfer(String password, String encryption, String to, BigDecimal gasPrice, BigDecimal value,
-			String contract, int decimals) throws Exception {
 		WalletFile walletFile = objectMapper.readValue(encryption, WalletFile.class);
 		return erc20Transfer(Credentials.create(Wallet.decrypt(password, walletFile)), to,
-				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), value, contract, decimals);
+				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), value, contract);
 	}
 
 	public String erc20Transfer(String privateKey, String to, BigDecimal value, String contract) throws Exception {
-		return erc20Transfer(Credentials.create(privateKey), to, ethGasPrice(), value, contract,
-				erc20CallDecimals(contract));
+		return erc20Transfer(Credentials.create(privateKey), to, ethGasPrice(), value, contract);
 	}
 
 	public String erc20Transfer(String privateKey, String to, BigDecimal gasPrice, BigDecimal value, String contract)
 			throws Exception {
-		return erc20Transfer(privateKey, to, gasPrice, value, contract, erc20CallDecimals(contract));
-	}
-
-	public String erc20Transfer(String privateKey, String to, BigDecimal gasPrice, BigDecimal value, String contract,
-			int decimals) throws Exception {
 		return erc20Transfer(Credentials.create(privateKey), to,
-				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), value, contract, decimals);
+				Convert.toWei(gasPrice, Convert.Unit.GWEI).toBigInteger(), value, contract);
 	}
 
 	protected String erc20Transfer(Credentials credentials, String to, BigInteger gasPrice, BigDecimal value,
-			String contract, int decimals) throws Exception {
+			String contract) throws Exception {
+		int decimals = erc20CallDecimals(contract);
 		Function function = new Function("transfer",
 				Arrays.asList((Type<?>) new Address(to),
 						(Type<?>) new Uint256(value.multiply(BigDecimal.TEN.pow(decimals)).toBigInteger())),
@@ -241,7 +233,8 @@ public class EthereumUtils {
 	}
 
 	public String erc20TransferSign(String password, String encryption, String to, BigDecimal gasPrice, int gasLimit,
-			BigDecimal value, String contract, int decimals) throws Exception {
+			BigDecimal value, String contract) throws Exception {
+		int decimals = erc20CallDecimals(contract);
 		WalletFile walletFile = objectMapper.readValue(encryption, WalletFile.class);
 		Credentials credentials = Credentials.create(Wallet.decrypt(password, walletFile));
 
@@ -281,6 +274,13 @@ public class EthereumUtils {
 	public BigInteger erc20CallTotalSupply(String contract) throws Exception {
 		Function function = new Function("totalSupply", Arrays.asList(), Arrays.asList(new TypeReference<Uint256>() {
 		}));
+		return ethCallSingleValueReturn(contract, function, BigInteger.class);
+	}
+
+	public BigInteger erc20CallBalanceOf(String contract, String address) throws Exception {
+		Function function = new Function("balanceOf", Arrays.asList(new Address(address)),
+				Arrays.asList(new TypeReference<Uint256>() {
+				}));
 		return ethCallSingleValueReturn(contract, function, BigInteger.class);
 	}
 
