@@ -15,6 +15,7 @@ public class EthereumInvocationHandler implements InvocationHandler{
 	}
 	
 	@Override
+	@SuppressWarnings("rawtypes")
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		if (Response.class.isAssignableFrom(method.getReturnType())) {
 			try {

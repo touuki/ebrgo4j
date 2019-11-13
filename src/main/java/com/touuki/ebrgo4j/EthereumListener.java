@@ -159,6 +159,7 @@ public class EthereumListener {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void handleBlock(Block block) throws Exception {
 		Date timestamp = new Date(block.getTimestamp().longValue() * 1000);
 		for (TransactionResult<Transaction> transactionResult : block.getTransactions()) {

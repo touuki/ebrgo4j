@@ -3,6 +3,7 @@ package com.touuki.ebrgo4j;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.ExecutionException;
 
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.admin.Admin;
@@ -63,45 +64,45 @@ public class EthereumRequestImpl implements EthereumRequest {
 	}
 
 	@Override
-	public EthGasPrice ethGasPrice() throws Exception {
+	public EthGasPrice ethGasPrice() throws InterruptedException, ExecutionException {
 		return web3j.ethGasPrice().sendAsync().get();
 	}
 
 	@Override
-	public EthSendTransaction ethSendRawTransaction(String signedTransactionData) throws Exception {
+	public EthSendTransaction ethSendRawTransaction(String signedTransactionData) throws InterruptedException, ExecutionException  {
 		return web3j.ethSendRawTransaction(signedTransactionData).sendAsync().get();
 	}
 
 	@Override
-	public EthBlockNumber ethBlockNumber() throws Exception {
+	public EthBlockNumber ethBlockNumber() throws InterruptedException, ExecutionException {
 		return web3j.ethBlockNumber().sendAsync().get();
 	}
 
 	@Override
-	public EthEstimateGas ethEstimateGas(Transaction transaction) throws Exception {
+	public EthEstimateGas ethEstimateGas(Transaction transaction) throws InterruptedException, ExecutionException {
 		return web3j.ethEstimateGas(transaction).sendAsync().get();
 	}
 
 	@Override
 	public EthGetTransactionCount ethGetTransactionCount(String address, DefaultBlockParameter defaultBlockParameter)
-			throws Exception {
+			throws InterruptedException, ExecutionException {
 		return web3j.ethGetTransactionCount(address, defaultBlockParameter).sendAsync().get();
 	}
 
 	@Override
 	public EthBlock ethGetBlockByNumber(DefaultBlockParameter defaultBlockParameter,
-			boolean returnFullTransactionObjects) throws Exception {
+			boolean returnFullTransactionObjects) throws InterruptedException, ExecutionException {
 		return web3j.ethGetBlockByNumber(defaultBlockParameter, returnFullTransactionObjects).sendAsync().get();
 	}
 
 	@Override
-	public EthGetTransactionReceipt ethGetTransactionReceipt(String transactionHash) throws Exception {
+	public EthGetTransactionReceipt ethGetTransactionReceipt(String transactionHash) throws InterruptedException, ExecutionException {
 		return web3j.ethGetTransactionReceipt(transactionHash).sendAsync().get();
 	}
 
 	@Override
 	public EthCall ethCall(org.web3j.protocol.core.methods.request.Transaction transaction,
-            DefaultBlockParameter defaultBlockParameter) throws Exception {
+            DefaultBlockParameter defaultBlockParameter) throws InterruptedException, ExecutionException {
 		return web3j.ethCall(transaction, defaultBlockParameter).sendAsync().get();
 	}
 

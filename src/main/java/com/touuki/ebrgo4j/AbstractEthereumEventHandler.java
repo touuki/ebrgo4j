@@ -13,7 +13,7 @@ public abstract class AbstractEthereumEventHandler implements EthereumEventHandl
 	@Override
 	public void ethReceived(Object addressId, Transaction transaction, Date timestamp) {
 		BigDecimal amount = Convert.fromWei(new BigDecimal(transaction.getValue()), Convert.Unit.ETHER);
-		ethReceived(addressId, transaction.getFrom(), transaction.getTo(), amount, timestamp);
+		ethReceived(addressId, transaction.getHash(), transaction.getFrom(), transaction.getTo(), amount, timestamp);
 	};
 
 	@Override
@@ -22,7 +22,7 @@ public abstract class AbstractEthereumEventHandler implements EthereumEventHandl
 		if (erc20.getDecimals() > 0) {
 			amount = amount.divide(BigDecimal.TEN.pow(erc20.getDecimals()));
 		}
-		erc20Received(addressId, "0x" + log.getTopics().get(1).substring(26),
+		erc20Received(addressId, transaction.getHash(), "0x" + log.getTopics().get(1).substring(26),
 				"0x" + log.getTopics().get(2).substring(26), amount, timestamp, erc20);
 	};
 
@@ -36,10 +36,11 @@ public abstract class AbstractEthereumEventHandler implements EthereumEventHandl
 		transactionFinished(transaction.getHash(), success, transaction.getBlockNumber().longValue(), fee, timestamp);
 	};
 
-	abstract public void ethReceived(Object addressId, String from, String to, BigDecimal amount, Date timestamp);
+	abstract public void ethReceived(Object addressId, String transactionHash, String from, String to,
+			BigDecimal amount, Date timestamp);
 
-	abstract public void erc20Received(Object addressId, String from, String to, BigDecimal amount, Date timestamp,
-			Erc20 erc20);
+	abstract public void erc20Received(Object addressId, String transactionHash, String from, String to,
+			BigDecimal amount, Date timestamp, Erc20 erc20);
 
 	abstract public void transactionFinished(String transactionHash, boolean success, long blockNumber, BigDecimal fee,
 			Date timestamp);
