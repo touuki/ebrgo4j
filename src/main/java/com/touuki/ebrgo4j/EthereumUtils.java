@@ -40,6 +40,7 @@ import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
+import org.web3j.utils.Convert.Unit;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -144,6 +145,10 @@ public class EthereumUtils {
 			}
 		}
 		return erc20Transfers;
+	}
+
+	public BigDecimal getEthAmount(String address) throws Exception {
+		return Convert.fromWei(new BigDecimal(ethereumRequest.ethGetBalance(address).getBalance()), Unit.ETHER);
 	}
 
 	public BigDecimal getErc20Amount(String address, String contract) throws Exception {

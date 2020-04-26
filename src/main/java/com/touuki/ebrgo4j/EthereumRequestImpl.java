@@ -8,12 +8,14 @@ import java.util.concurrent.ExecutionException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.admin.Admin;
 import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthGasPrice;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
@@ -69,7 +71,13 @@ public class EthereumRequestImpl implements EthereumRequest {
 	}
 
 	@Override
-	public EthSendTransaction ethSendRawTransaction(String signedTransactionData) throws InterruptedException, ExecutionException  {
+	public EthGetBalance ethGetBalance(String address) throws InterruptedException, ExecutionException {
+		return web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST).sendAsync().get();
+	}
+
+	@Override
+	public EthSendTransaction ethSendRawTransaction(String signedTransactionData)
+			throws InterruptedException, ExecutionException {
 		return web3j.ethSendRawTransaction(signedTransactionData).sendAsync().get();
 	}
 
@@ -96,13 +104,14 @@ public class EthereumRequestImpl implements EthereumRequest {
 	}
 
 	@Override
-	public EthGetTransactionReceipt ethGetTransactionReceipt(String transactionHash) throws InterruptedException, ExecutionException {
+	public EthGetTransactionReceipt ethGetTransactionReceipt(String transactionHash)
+			throws InterruptedException, ExecutionException {
 		return web3j.ethGetTransactionReceipt(transactionHash).sendAsync().get();
 	}
 
 	@Override
 	public EthCall ethCall(org.web3j.protocol.core.methods.request.Transaction transaction,
-            DefaultBlockParameter defaultBlockParameter) throws InterruptedException, ExecutionException {
+			DefaultBlockParameter defaultBlockParameter) throws InterruptedException, ExecutionException {
 		return web3j.ethCall(transaction, defaultBlockParameter).sendAsync().get();
 	}
 

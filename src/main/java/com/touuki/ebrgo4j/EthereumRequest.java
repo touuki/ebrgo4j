@@ -7,6 +7,7 @@ import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthGasPrice;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
@@ -19,6 +20,8 @@ public interface EthereumRequest {
 	EthBlockNumber ethBlockNumber() throws Exception;
 
 	EthEstimateGas ethEstimateGas(Transaction transaction) throws Exception;
+	
+	EthGetBalance ethGetBalance(String address) throws Exception;
 
 	EthGetTransactionCount ethGetTransactionCount(String address, DefaultBlockParameter defaultBlockParameter)
 			throws Exception;
