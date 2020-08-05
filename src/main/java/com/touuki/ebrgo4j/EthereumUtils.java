@@ -57,15 +57,20 @@ public class EthereumUtils {
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	}
 
+	private EthereumRequestImpl ethereumRequestImpl;
 	private EthereumRequest ethereumRequest;
 	private BigInteger gasPrice;
 	private long gasPriceTimestamp = 0;
 	private long gasPriceUpdatePeriod = 180_000L;
 
 	public EthereumUtils(String url) throws ConnectException, URISyntaxException {
-		EthereumRequestImpl ethereumRequestImpl = new EthereumRequestImpl(url);
+		ethereumRequestImpl = new EthereumRequestImpl(url);
 		ethereumRequest = (EthereumRequest) Proxy.newProxyInstance(ethereumRequestImpl.getClass().getClassLoader(),
 				ethereumRequestImpl.getClass().getInterfaces(), new EthereumInvocationHandler(ethereumRequestImpl));
+	}
+	
+	public void changeUrl(String url) throws ConnectException, URISyntaxException {
+		ethereumRequestImpl.changeUrl(url);
 	}
 
 	public List<String> createAccount(String password) throws InvalidAlgorithmParameterException,

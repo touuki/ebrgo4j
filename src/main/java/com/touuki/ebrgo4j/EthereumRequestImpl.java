@@ -33,18 +33,28 @@ public class EthereumRequestImpl implements EthereumRequest {
 		setWeb3jService(url);
 	}
 
-	public synchronized void webSocketReconnect() throws ConnectException {
-		if (webSocketClient != null && !webSocketClient.isOpen()) {
-			webSocketClient = new WebSocketClient(webSocketClient.getURI());
-			WebSocketService webSocketService = new WebSocketService(webSocketClient, false);
-			webSocketService.connect();
-			web3j.shutdown();
-			web3j = Admin.build(webSocketService);
+	public void webSocketReconnect() throws ConnectException {
+		synchronized(this) {			
+			if (webSocketClient != null && !webSocketClient.isOpen()) {
+				webSocketClient = new WebSocketClient(webSocketClient.getURI());
+				WebSocketService webSocketService = new WebSocketService(webSocketClient, false);
+				webSocketService.connect();
+				web3j.shutdown();
+				web3j = Admin.build(webSocketService);
+			}
 		}
 	}
 
 	public Web3j getWeb3j() {
 		return web3j;
+	}
+	
+	public void changeUrl(String url) throws ConnectException, URISyntaxException {
+		synchronized(this) {
+			web3j.shutdown();
+			webSocketClient = null;
+			setWeb3jService(url);
+		}
 	}
 
 	public void setWeb3jService(String url) throws ConnectException, URISyntaxException {
