@@ -173,6 +173,7 @@ public class EthereumListener {
 		}
 
 		if (erc20ForAddress.containsKey(transaction.getTo()) && transaction.getInput().startsWith("0xa9059cbb")
+				&& transaction.getInput().length() >= 74
 				&& idForAddress.containsKey("0x" + transaction.getInput().substring(34, 74))) {
 			TransactionReceipt receipt = ethereumUtils.ethGetTransactionReceipt(transaction.getHash());
 			if (receipt.getStatus().equals("0x1")) {
